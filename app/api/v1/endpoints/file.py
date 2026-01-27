@@ -2,6 +2,6 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("/{file_path:path}")
 async def read_file(file_path: str):
     return {"file_path": file_path}
