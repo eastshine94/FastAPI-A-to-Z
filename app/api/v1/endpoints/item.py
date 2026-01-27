@@ -1,11 +1,9 @@
 import random
 from typing import Annotated, Literal
-from fastapi import APIRouter, Query, Path
+from fastapi import APIRouter, Query, Path,Body
 from pydantic import BaseModel, AfterValidator, Field
 
 router = APIRouter()
-
-
 
 
 class Item(BaseModel):
@@ -14,6 +12,11 @@ class Item(BaseModel):
     price: float
     tax: float | None = None
 
+class User(BaseModel):
+    username: str
+    full_name: str | None = None
+
+    
 data = {
     "isbn-9781529046137": "The Hitchhiker's Guide to the Galaxy",
     "imdb-tt0371724": "The Hitchhiker's Guide to the Galaxy",
@@ -67,7 +70,7 @@ async def read_item(item_id: Annotated[int,Path(title="The ID of the item to get
     return item
 
 @router.post("/")
-async def create_item(item:Item):
+async def create_item(item:Annotated[Item, Body(embed=True)]):
     item_dict = item.model_dump()
     if item.tax is not None:
         price_with_tax = item.price + item.tax
@@ -76,8 +79,13 @@ async def create_item(item:Item):
 
 
 @router.put("/{item_id}")
-async def update_item(item_id:int, item: Item, q: str | None = None):
-    result = {"item_id" : item_id, **item.model_dump()}
-    if q is not None:
-        result.update({"q":q})
-    return result
+async def update_item(
+    item_id: Annotated[int, Path(title="The ID of the item to get" ,ge=0, le=1000)],
+    item: Item, user: User, 
+    importance: Annotated[int, Body(gt=0)],
+    q: str | None = None):
+
+    results = {"item_id": item_id, "item": item, "user": user, "importance": importance}
+    if q:
+        results.update({"q": q})
+    return results
