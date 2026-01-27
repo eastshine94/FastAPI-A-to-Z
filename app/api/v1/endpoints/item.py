@@ -1,9 +1,12 @@
 import random
-from typing import Annotated
+from typing import Annotated, Literal
 from fastapi import APIRouter, Query, Path
-from pydantic import BaseModel, AfterValidator
+from pydantic import BaseModel, AfterValidator, Field
 
 router = APIRouter()
+
+
+
 
 class Item(BaseModel):
     name: str
@@ -22,20 +25,28 @@ def check_valid_id(id:str):
         raise ValueError('Invalid ID format, it must start with "isbn-" or "imdb-"')
     return id
 
+class FilterParams(BaseModel):
+    model_config = {"extra": "forbid"} # 클라이언트가 쿼리 매개변수로 추가적인 데이터를 보내려고 하면 에러
+    limit: int = Field(100,gt=0, le=100)
+    offset: int = Field(0, ge=0)
+    order_by: Literal['created_at', 'updated_at'] = 'created_at'
+    tags: list[str] = []
+    q: str | None = Field(
+        None,    
+        title="Query string",
+        description="Query string for the items to search in the database that have a good match",
+        alias="item-query", # 별칭 지정 => q는 더이상 사용할 수 없음
+        deprecated=True, # docs에 deprecated 명시
+        include_in_schema=False # docs 상에 안보이도록
+    )
+    id: Annotated[str|None, AfterValidator(check_valid_id)] = None
+
+
 
 @router.get('/')
-async def read_items(
-        id: Annotated[str | None, AfterValidator(check_valid_id)]=None,
-        q: Annotated[list[str] | None, Query(
-            title="Query string",
-            description="Query string for the items to search in the database that have a good match",
-            alias="item-query", # 별칭 지정 => q는 더이상 사용할 수 없음
-            deprecated=True, # docs에 deprecated 명시
-            include_in_schema=False # docs 상에 안보이도록
-        )] = None
-    ):
-    query_items = {"q": q}
-
+async def read_items(filter_query:Annotated[FilterParams, Query()]):
+    id = filter_query.id
+    query_items = {**filter_query.model_dump(), 'id': None}
     if id:
         item = data.get(id)
     else:
