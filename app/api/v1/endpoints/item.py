@@ -1,6 +1,6 @@
 import random
 from typing import Annotated
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Path
 from pydantic import BaseModel, AfterValidator
 
 router = APIRouter()
@@ -46,7 +46,7 @@ async def read_items(
 
 
 @router.get("/{item_id}")
-async def read_item(item_id: str, needy: str, q: Annotated[str | None, Query(max_length=10,pattern="^fixedquery$")] = None, short: bool = False, ):
+async def read_item(item_id: Annotated[int,Path(title="The ID of the item to get", gt=0, le=1000)], needy: str, q: Annotated[str | None, Query(max_length=10,pattern="^fixedquery$")] = None, short: bool = False, ):
     item = {"item_id": item_id,"needy":needy }
     if q:
         item.update({"q":q})
@@ -66,7 +66,7 @@ async def create_item(item:Item):
 
 @router.put("/{item_id}")
 async def update_item(item_id:int, item: Item, q: str | None = None):
-    result = {"item_id": item_id, **item.model_dump()}
+    result = {"item_id" : item_id, **item.model_dump()}
     if q is not None:
         result.update({"q":q})
     return result
