@@ -1,9 +1,13 @@
 import random
 from typing import Annotated, Literal
 from fastapi import APIRouter, Query, Path,Body
-from pydantic import BaseModel, AfterValidator, Field
+from pydantic import BaseModel, AfterValidator, Field, HttpUrl
 
 router = APIRouter()
+
+class Image(BaseModel):
+    url: HttpUrl
+    name: str
 
 
 class Item(BaseModel):
@@ -11,6 +15,14 @@ class Item(BaseModel):
     description: str | None = Field(None, title="The description of the item", max_length=300)
     price: float = Field(gt=0, description="The price must be greater than zero")
     tax: float | None
+    tags: set[str] = [] # set으로 지정 시 고유한 항목들의 집합으로 출력됨
+    images: list[Image] | None = None
+
+class Offer(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    items: list[Item] 
 
 class User(BaseModel):
     username: str
@@ -77,6 +89,12 @@ async def create_item(item:Annotated[Item, Body(embed=True)]):
         item_dict.update({"price_with_tax": price_with_tax})
     return item_dict
 
+
+@router.post("/multiple")
+async def create_multiple_images(images: list[Image]):
+    for image in images:
+        image.url
+    return images
 
 @router.put("/{item_id}")
 async def update_item(
