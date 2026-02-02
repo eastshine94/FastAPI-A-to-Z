@@ -1,6 +1,18 @@
 from fastapi import APIRouter
+from pydantic import BaseModel, EmailStr
+
 
 router = APIRouter()
+
+
+class BaseUser(BaseModel):
+    username: str
+    email: EmailStr
+    full_name: str | None = None
+
+
+class UserIn(BaseUser):
+    password: str
 
 
 @router.get("/{user_id}/items/{item_id}")
@@ -15,3 +27,8 @@ async def read_user_item(
             {"description": "This is an amazing item that has a long description"}
         )
     return item
+
+
+@router.post("/", response_model=BaseUser, response_model_include=["username"])
+async def create_user(user: UserIn):
+    return user

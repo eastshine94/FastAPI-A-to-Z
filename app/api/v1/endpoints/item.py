@@ -1,5 +1,4 @@
 import random
-from uuid import UUID
 from typing import Annotated, Literal
 from fastapi import APIRouter, Query, Path, Body
 from pydantic import BaseModel, AfterValidator, Field, HttpUrl
@@ -84,9 +83,11 @@ async def read_items(filter_query: Annotated[FilterParams, Query()]):
     return query_items
 
 
-@router.get("/{item_id}", response_model=Item)
+@router.get(
+    "/{item_id}",
+)
 async def read_item(
-    item_id: Annotated[UUID, Path(title="The ID of the item to get", gt=0, le=1000)],
+    item_id: Annotated[int, Path(title="The ID of the item to get", gt=0, le=1000)],
     needy: str,
     q: Annotated[str | None, Query(max_length=10, pattern="^fixedquery$")] = None,
     short: bool = False,
