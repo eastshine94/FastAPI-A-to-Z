@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, Form
 
 router = APIRouter()
 
@@ -11,12 +11,19 @@ async def read_file(file_path: str):
 
 @router.post("/files/")
 async def create_file(
+    *,
     file: Annotated[bytes | None, File(description="A file read as bytes")] = None,
+    fileb: Annotated[UploadFile, File()],
+    token: Annotated[str, Form()],
 ):
     if not file:
         return {"message": "No file sent"}
     else:
-        return {"file_size": len(file)}
+        return {
+            "file_size": len(file),
+            "token": token,
+            "fileb_content_type": fileb.content_type,
+        }
 
 
 @router.post("/files/")
