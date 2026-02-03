@@ -1,6 +1,6 @@
 import random
 from typing import Annotated, Literal
-from fastapi import APIRouter, Query, Path, Body
+from fastapi import APIRouter, Query, Path, Body, status
 from pydantic import BaseModel, AfterValidator, Field, HttpUrl
 
 router = APIRouter()
@@ -103,7 +103,7 @@ async def read_item(
     return item
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_item(
     item: Annotated[
         Item,
