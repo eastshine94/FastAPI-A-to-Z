@@ -22,10 +22,15 @@ def create_hero(hero_data: HeroCreate, session: SessionDep) -> Hero:
 @router.get("/heroes/")
 def read_heroes(
     session: SessionDep,
+    age: int | None = None,
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Hero]:
-    heroes = session.exec(select(Hero).offset(offset).limit(limit)).all()
+    query = select(Hero)
+    if age is not None:
+        query = query.where(Hero.age > age)
+
+    heroes = session.exec(query.offset(offset).limit(limit)).all()
     return heroes
 
 
