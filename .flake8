@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 88
+extend-ignore =
+    E203,  # black과 충돌하는 공백 규칙
+    W503,  # 연산자 줄바꿈 규칙(black과 호환)
+exclude = .git,__pycache__,.venv,build,dist
+per-file-ignores =
+    __init__.py:F401  # 패키지 re-export에서 미사용 import 허용

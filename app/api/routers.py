@@ -1,5 +1,14 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import item, user, model, file, index_weights, login, animal
+from app.api.v1.endpoints import (
+    item,
+    user,
+    model,
+    file,
+    index_weights,
+    login,
+    animal,
+    hero,
+)
 
 api_router = APIRouter()
 
@@ -12,3 +21,4 @@ api_router.include_router(
     index_weights.router, prefix="/index-weights", tags=["index weights"]
 )
 api_router.include_router(login.router, prefix="/login", tags=["login"])
+api_router.include_router(hero.router, tags=["heros"])
