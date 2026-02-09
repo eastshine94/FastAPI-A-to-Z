@@ -22,15 +22,10 @@ def create_hero(hero_data: HeroCreate, session: SessionDep) -> Hero:
 @router.get("/heroes/")
 def read_heroes(
     session: SessionDep,
-    age: int | None = None,
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
 ) -> list[Hero]:
-    query = select(Hero)
-    if age is not None:
-        query = query.where(Hero.age > age)
-
-    heroes = session.exec(query.offset(offset).limit(limit)).all()
+    heroes = session.exec(select(Hero).offset(offset).limit(limit)).all()
     return heroes
 
 
@@ -50,3 +45,21 @@ def delete_hero(hero_id: int, session: SessionDep):
     session.delete(hero)
     session.commit()
     return {"ok": True}
+
+
+@router.get("/first-hero", summary="First or None")
+def search_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
+    statement = select(Hero).where(Hero.age >= age)
+    # first는 여러개 중 첫번째 값을 가져온다
+    # 충족하는 조건이 없으면 None
+    results = session.exec(statement).first()
+    return results
+
+
+@router.get("/one-hero", summary="Exactly One")
+def search_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
+    statement = select(Hero).where(Hero.age >= age)
+    # 쿼리와 일치하는 행이 정확히 하나만 있는지 확인해야 하는 경우
+    # 2개 이상 또는 존재하지 않으면 에러
+    results = session.exec(statement).one()
+    return results
