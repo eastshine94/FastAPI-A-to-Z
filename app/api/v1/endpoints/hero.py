@@ -1,29 +1,20 @@
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
 from app.core.database import SessionDep
 from app.models.hero import Hero
-from app.schemas.hero import HeroCreate
+from app.schemas.hero import HeroCreate, HeroUpdate
 
 
 router = APIRouter()
-
-
-@router.post("/heroes/")
-def create_hero(hero_data: HeroCreate, session: SessionDep) -> Hero:
-    hero = Hero.model_validate(hero_data)
-    session.add(hero)
-    session.commit()
-    session.refresh(hero)
-    return hero
 
 
 @router.get("/heroes/")
 def read_heroes(
     session: SessionDep,
     offset: int = 0,
-    limit: Annotated[int, Query(le=100)] = 100,
+    limit: Annotated[int, Query(le=100)] = 2,
 ) -> list[Hero]:
     heroes = session.exec(select(Hero).offset(offset).limit(limit)).all()
     return heroes
@@ -35,16 +26,6 @@ def read_hero(hero_id: int, session: SessionDep) -> Hero:
     if not hero:
         raise HTTPException(status_code=404, detail="Hero not found")
     return hero
-
-
-@router.delete("/heroes/{hero_id}")
-def delete_hero(hero_id: int, session: SessionDep):
-    hero = session.get(Hero, hero_id)
-    if not hero:
-        raise HTTPException(status_code=404, detail="Hero not found")
-    session.delete(hero)
-    session.commit()
-    return {"ok": True}
 
 
 @router.get("/first-hero", summary="First or None")
@@ -63,3 +44,39 @@ def search_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
     # 2개 이상 또는 존재하지 않으면 에러
     results = session.exec(statement).one()
     return results
+
+
+@router.post("/heroes/")
+def create_hero(hero_data: HeroCreate, session: SessionDep) -> Hero:
+    hero = Hero.model_validate(hero_data)
+    session.add(hero)
+    session.commit()
+    session.refresh(hero)
+    return hero
+
+
+@router.put("/heroes/{hero_id}")
+def update_hero(hero_id: int, hero_data: HeroUpdate, session: SessionDep) -> Hero:
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(status_code=404, detail="Hero not found")
+
+    # exclude_unset=True: 요청에 포함된 필드만 업데이트
+    update_data = hero_data.model_dump(exclude_unset=True)
+    hero.sqlmodel_update(update_data)
+
+    session.add(hero)
+    session.commit()
+    session.refresh(hero)
+
+    return hero
+
+
+@router.delete("/heroes/{hero_id}")
+def delete_hero(hero_id: int, session: SessionDep):
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(status_code=404, detail="Hero not found")
+    session.delete(hero)
+    session.commit()
+    return {"ok": True}
