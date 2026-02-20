@@ -1,5 +1,5 @@
 import random
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Query, Path, Body, status
 from pydantic import BaseModel, AfterValidator, Field, HttpUrl
 
@@ -18,7 +18,7 @@ class Item(BaseModel):
     )
     price: float = Field(gt=0, description="The price must be greater than zero")
     tax: float | None
-    tags: set[str] = []  # set으로 지정 시 고유한 항목들의 집합으로 출력됨
+    tags: set[str] = set()  # set으로 지정 시 고유한 항목들의 집합으로 출력됨
     images: list[Image] | None = None
 
 
@@ -66,7 +66,6 @@ class FilterParams(BaseModel):
         description="Query string for the items to search in the database that have a good match",
         alias="item-query",  # 별칭 지정 => q는 더이상 사용할 수 없음
         deprecated=True,  # docs에 deprecated 명시
-        include_in_schema=False,  # docs 상에 안보이도록
     )
     id: Annotated[str | None, AfterValidator(check_valid_id)] = None
 
@@ -74,7 +73,7 @@ class FilterParams(BaseModel):
 @router.get("/")
 async def read_items(filter_query: Annotated[FilterParams, Query()]):
     id = filter_query.id
-    query_items = {**filter_query.model_dump(), "id": None}
+    query_items: dict[str, Any] = {**filter_query.model_dump(), "id": None}
     if id:
         item = data.get(id)
     else:
@@ -92,7 +91,7 @@ async def read_item(
     q: Annotated[str | None, Query(max_length=10, pattern="^fixedquery$")] = None,
     short: bool = False,
 ):
-    item = {"item_id": item_id, "needy": needy}
+    item: dict[str, Any] = {"item_id": item_id, "needy": needy}
     if q:
         item.update({"q": q})
     if not short:
@@ -182,7 +181,7 @@ async def update_item(
     q: str | None = None,
 ):
 
-    results = {"item_id": item_id, "item": item, "user": user, "importance": importance}
+    results: dict[str, Any] = {"item_id": item_id, "item": item, "user": user, "importance": importance}
     if q:
         results.update({"q": q})
     return results

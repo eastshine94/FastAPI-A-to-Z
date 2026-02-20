@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter
 from pydantic import BaseModel, EmailStr
 
@@ -38,7 +40,7 @@ def fake_save_user(user_in: UserIn):
 async def read_user_item(
     user_id: int, item_id: str, q: str | None = None, short: bool = False
 ):
-    item = {"item_id": item_id, "owner_id": user_id}
+    item: dict[str, Any] = {"item_id": item_id, "owner_id": user_id}
     if q:
         item.update({"q": q})
     if not short:

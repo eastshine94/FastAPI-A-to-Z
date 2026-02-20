@@ -11,7 +11,7 @@ class ModelName(str, Enum):
 
 
 @router.get("/{model_name}")
-async def get_model(model_name: ModelName):
+async def get_model(model_name: ModelName) -> dict[str, str]:
     if model_name is model_name.alexnet:
         return {"model_name": model_name, "message": "Deep Learning FTW!"}
 

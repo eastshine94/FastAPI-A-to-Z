@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     login,
     animal,
     hero,
+    team,
 )
 
 api_router = APIRouter()
@@ -22,3 +23,4 @@ api_router.include_router(
 )
 api_router.include_router(login.router, prefix="/login", tags=["login"])
 api_router.include_router(hero.router, tags=["heros"])
+api_router.include_router(team.router, tags=["teams"])

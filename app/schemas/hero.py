@@ -1,6 +1,14 @@
 from pydantic import BaseModel
 
 
+class HeroReadResponse(BaseModel):
+    name: str
+    age: int | None
+    secret_name: str
+    team_name: str
+    headquarters: str
+
+
 class HeroCreate(BaseModel):
     name: str
     age: int | None

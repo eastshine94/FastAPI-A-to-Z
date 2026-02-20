@@ -1,10 +1,11 @@
-from typing import Annotated, Any
+from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
 from app.core.database import SessionDep
 from app.models.hero import Hero
-from app.schemas.hero import HeroCreate, HeroUpdate
+from app.models.team import Team
+from app.schemas.hero import HeroCreate, HeroReadResponse, HeroUpdate
 
 
 router = APIRouter()
@@ -14,10 +15,22 @@ router = APIRouter()
 def read_heroes(
     session: SessionDep,
     offset: int = 0,
-    limit: Annotated[int, Query(le=100)] = 2,
-) -> list[Hero]:
-    heroes = session.exec(select(Hero).offset(offset).limit(limit)).all()
-    return heroes
+    limit: Annotated[int, Query(le=100)] = 20,
+) -> list[HeroReadResponse]:
+    results = session.exec(
+        select(Hero, Team).where(Hero.team_id == Team.id).offset(offset).limit(limit)
+    ).all()
+
+    return [
+        HeroReadResponse(
+            name=hero.name,
+            age=hero.age,
+            secret_name=hero.secret_name,
+            team_name=team.name,
+            headquarters=team.headquarters,
+        )
+        for hero, team in results
+    ]
 
 
 @router.get("/heroes/{hero_id}")
@@ -29,8 +42,8 @@ def read_hero(hero_id: int, session: SessionDep) -> Hero:
 
 
 @router.get("/first-hero", summary="First or None")
-def search_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
-    statement = select(Hero).where(Hero.age >= age)
+def search_first_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
+    statement = select(Hero).where(Hero.age is not None and Hero.age >= age)
     # first는 여러개 중 첫번째 값을 가져온다
     # 충족하는 조건이 없으면 None
     results = session.exec(statement).first()
@@ -38,8 +51,8 @@ def search_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
 
 
 @router.get("/one-hero", summary="Exactly One")
-def search_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
-    statement = select(Hero).where(Hero.age >= age)
+def search_one_heros(age: Annotated[int, Query(gt=0)], session: SessionDep):
+    statement = select(Hero).where(Hero.age is not None and Hero.age >= age)
     # 쿼리와 일치하는 행이 정확히 하나만 있는지 확인해야 하는 경우
     # 2개 이상 또는 존재하지 않으면 에러
     results = session.exec(statement).one()
